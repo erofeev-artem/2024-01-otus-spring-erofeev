@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>List of all books</title>
+    <style type="text/css">
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
+
+.table {
+border: 1px solid black;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
+.thead th:nth-child(1) {
+  width: 30%;
+}
+
+.thead th:nth-child(2) {
+  width: 20%;
+}
+
+.thead th:nth-child(3) {
+  width: 15%;
+}
+
+.thead th:nth-child(4) {
+  width: 35%;
+}
+
+th,
+td {
+  padding: 20px;
+}
+
+tbody tr:nth-child(odd) {
+  background-color: #b8b4b4;
+}
+
+tbody tr:nth-child(even) {
+  background-color: #e0dcdc;
+}
+
+.edit-button{
+width: 50px;
+margin-right: 20px;
+}
+
+.delete-button{
+
+}
+
+.inter {
+  font-family: "Inter", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: <weight>;
+  font-style: normal;
+  font-variation-settings:
+    "slnt" 0;
+}
+
+.manrope {
+  font-family: "Manrope", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: <weight>;
+  font-style: normal;
+}
+
+    </style>
+    <script src="/webjars/jquery/3.5.1/jquery.min.js"></script>
+
+</head>
+<h2>Books:</h2>
+
+<div class="container">
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col" class="inter">Id</th>
+            <th scope="col">Title</th>
+            <th scope="col">Author</th>
+            <th scope="col">Genres</th>
+        </tr>
+        </thead>
+        <tbody id="tbody">
+        <script>
+        $(function () {
+        $.get('/book/all').done(function(books) {
+                 books.forEach(function (book) {
+                 let genres = book.genresNames.map((s) => {var name = s.split("");
+                                                                   name.unshift(" ");
+                                                                   return name.join("");
+                                                                   });
+                    $('tbody').append(
+                    `<tr>
+                        <td>${book.id}</td>
+                        <td><a href="/info?id=${book.id}">${book.title}</a></td>
+                        <td>${book.authorName}</td>
+                        <td>${genres}</td>
+                        <td>
+                        <a href="/edit?id=${book.id}">
+                            <button type="button" class="edit-button">Edit</button>
+                        </a>
+                            <button type="button" onclick="deleteBook(${book.id}, this)">Delete</button>
+                    </td>
+                    </tr>
+                    `)
+                    });
+                })
+               });
+
+        </script>
+        </tbody>
+    </table>
+    <td>
+            <button type="button" onclick="location.href = '/create';" style="width: auto">Add new book</button>
+    </td>
+</div>
+
+<script type="text/javascript">
+ function deleteBook(book_id, e) {
+ $.ajax({
+        type: 'DELETE',
+        url: '/book/'+ book_id,
+        success: function(response){
+        $(e.parentNode.parentNode.remove());
+    }
+});
+}
+</script>
+</body>
+</html>

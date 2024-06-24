@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Info</title>
+  <style type="text/css">
+
+.body {
+padding: 50px;
+background-color: gray;
+}
+
+.comment-block {
+background-color: #b8b4b4;
+}
+
+.comment-name{
+    margin-top: 4px;
+    margin-bottom: 2px;
+    margin-left: 4px;
+    width: 900px;
+}
+
+.input-id {
+margin-top: 4px;
+width: 392px;
+margin-left: 31px;
+}
+
+.input-title {
+width: 392px;
+margin-left: 15px;
+}
+
+.input-author {
+width: 392px;
+margin-left: 4px;
+}
+
+.input-genre{
+width: 392px;
+margin-left: 0px;
+}
+
+.label{
+width: 300px;
+}
+
+.row {
+margin-top: 10px;
+margin-bottom: 10px;
+}
+
+.radius{
+border: 2px solid;
+border-radius: 1px;
+}
+
+.errors {
+color: red;
+}
+
+.info-block{
+background-color: #e0dcdc;
+margin-bottom: 15px;
+}
+
+.comment-info{
+display:inline-block;
+}
+
+.back-button{
+margin-left: 278px;
+}
+
+.buttons-row {
+  display: inline-block;
+  padding-bottom: 5px;
+}
+
+.comments-label {
+  font-size: 20px;
+}
+
+.popup-overlay {
+visibility:hidden;
+}
+
+.popup-content {
+visibility:hidden;
+}
+
+.popup-overlay.active{
+visibility:visible;
+ position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 200px;
+            text-align: center;
+            background-color: #e8eae6;
+            box-sizing: border-box;
+            padding: 10px;
+            z-index: 100;
+}
+
+.popup-content.active {
+visibility:visible;
+ position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 200px;
+            text-align: center;
+            background-color: #e8eae6;
+            box-sizing: border-box;
+            padding: 10px;
+            z-index: 100;
+}
+
+    </style>
+<script src="/webjars/jquery/3.5.1/jquery.min.js"></script>
+
+</head>
+<body>
+<h1>Book info</h1>
+  <div class="info-block">
+    <div class="row">
+      <label for="id-input">Id:</label>
+      <th bgcolor="#524342"></th>
+      <input id="id-input" class="input-id" type="text" readonly="readonly"/>
+    </div>
+
+    <div class="row">
+      <label for="book-title-input">Title:</label>
+      <input id="book-title-input" class="input-title" name="title" type="text" readonly="readonly"/>
+
+    </div>
+
+    <div class="row">
+      <label for="book-author-input">Author</label>
+      <input id="book-author-input" class="input-author" name="authorFullName" readonly="readonly" type="text"/>
+    </div>
+
+    <div class="row">
+      <label for="book-genre-input">Genres:</label>
+      <input id="book-genre-input" class="input-genre" readonly="readonly"/>
+    </div>
+    <div class="buttons-row">
+        <button type="button" class="open-popup" style="width: auto">Add new comment</button>
+        <button type="button" onclick="location.href = '/'" class="back-button">Back</button>
+    </div>
+  </div>
+
+  <label class="comments-label">Comments:</label>
+  <div class="comment-block">
+    <div class="row">
+        <div class="comment-info">
+        </div>
+    </div>
+  </div>
+
+<div class="popup-overlay">
+  <div class="popup-content">
+    <h2>Input comment</h2>
+    <input id="comment-input" class="input-comment"/>
+    <button class="save-comment">Save</button>
+    <button class="close-popup">Close</button>
+  </div>
+</div>
+
+<script>
+  var book;
+  var url = document.URL;
+  var currentId = url.split('id=')[1];
+  getBookInfo();
+  getComments();
+
+$(".open-popup").on("click", function() {
+  $('#comment-input').val('');
+  $(".popup-overlay, .popup-content").addClass("active");
+});
+
+$(".close-popup").on("click", function(){
+  $(".popup-overlay, .popup-content").removeClass("active");
+});
+
+$(".save-comment").on("click", function() {
+     if(document.getElementById('comment-input').value.length<1) {
+            alert("Comment can't be empty");
+            return;
+     }
+  var id = $('#id-input').val();
+  var comment = $('#comment-input').val();
+  const commentData = {
+  text: comment,
+  bookId: id
+  }
+
+  $.ajax({
+    url: '/comment/save',
+    type: 'post',
+    data: JSON.stringify(commentData),
+    headers: {
+              "Content-Type": "application/json; odata=verbose"
+    },
+    dataType: 'json',
+
+    statusCode: {
+    201: function(){
+    $(".popup-overlay, .popup-content").removeClass("active");
+    getComments()
+    }
+    }
+  });
+});
+function getBookInfo(){
+$.ajax({
+      type: 'GET',
+      url: '/book/'+currentId,
+      success: function(response){
+      $('.input-id').val(response.id);
+      $('.input-title').val(response.title);
+      $('.input-author').val(response.authorName);
+      $('.input-genre').val(response.genresNames);
+      book = response;
+      }
+   });
+}
+
+function getComments(){
+$('.comment-info').children("input").remove();
+$.ajax({
+      type: 'GET',
+      url: '/comment/book/'+currentId,
+      success: function(response){
+      $.each(response, function(key, value)
+            {
+            $('.comment-info').append(
+                `<input id="book-comment-input" class="comment-name radius" readonly="readonly"/>`
+                )
+                var elements = document.getElementsByClassName("comment-name");
+                elements[elements.length - 1].value = value;
+            });
+      }
+   });
+}
+</script>
+</body>
+</html>

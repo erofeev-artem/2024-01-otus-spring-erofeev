@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Edit or create book</title>
+  <style type="text/css">
+
+.body {
+padding: 50px;
+background-color: gray;
+}
+
+.input {
+width: 292px;
+}
+
+.select {
+width: 300px;
+}
+
+.row {
+margin-top: 10px;
+margin-bottom: 10px;
+}
+
+.radius{
+border: 2px solid;
+border-radius: 5px;
+}
+</style>
+  <script src="/webjars/jquery/3.5.1/jquery.min.js"></script>
+
+</head>
+<body style="background-color:#e2e2e2;">
+<h1 id="h1">Edit book</h1>
+  <script>
+    if(document.URL.includes("create")){
+       document.getElementById("h1").innerHTML = "Create book";
+    }
+  </script>
+
+  <div class="row">
+    <div for="book-title-input">Title:</div>
+    <input class="input radius" id="book-title-input" name="title" type="text" th:value="*{title}"/>
+  </div>
+
+  <div class="row">
+    <div for="book-author-select">Author:</div>
+    <select class="select radius" id="book-author-select" name="authorId">
+    </select>
+    <div id="result"></div>
+  </div>
+
+  <div class="row">
+    <div for="book-genre-select">Genres:</div>
+    <select class="select radius" required multiple id="book-genre-select" name="genresIds">
+    </select>
+  </div>
+  <div class="row">
+    <button class="radius" onclick="save()" type="submit" th:text="Save"></button>
+    <button class="radius" onclick="location.href = '/';" type="button" th:text="Cancel"></button>
+  </div>
+
+<script>
+    var fullNames;
+    var authorSelect = $('#book-author-select');
+       $.get("/book/author", (data, status) => {
+       fullNames = data.map(a=>a.fullName);
+       $.each(fullNames, function(val, text) {
+       authorSelect.append(
+                  $('<option></option>').val(val).html(text)
+                  );
+       });
+      });
+
+    var genreNames;
+    var genreSelect = $('#book-genre-select');
+    $.get("/book/genre", (data, status) => {
+      genreNames = data.map(a=>a.name);
+    $.each(genreNames, function(val, text) {
+       genreSelect.append(
+                  $('<option></option>').val(val).html(text)
+                  );
+       });
+      });
+
+  function getSelectedGenres(){
+      const selected = document.querySelectorAll('#book-genre-select option:checked');
+      const values = Array.from(selected).map(el => el.text);
+      return values;
+  }
+
+  function getSelectedAuthor(){
+   const selected = document.querySelector('#book-author-select option:checked').text;
+      return selected;
+  }
+
+  function save(){
+    var title = document.querySelector('#book-title-input').value;
+    var selectedAuthor = getSelectedAuthor();
+    var selectedGenres = getSelectedGenres();
+    var alertMessage = "";
+    if(title.length<1) {
+      alertMessage = alertMessage.concat("Title can't be empty. ");}
+
+    if(selectedAuthor.length<1) {
+      alertMessage = alertMessage.concat("You must select at least one author. ");}
+
+    if(selectedGenres.length<1) {
+      alertMessage = alertMessage.concat("You must select at least one genre. ");}
+
+    if(alertMessage.length>0){
+      alert(alertMessage);
+            return;
+    }
+    var url = document.URL;
+    var currentId = url.split('id=')[1];
+
+    const bookDto = {
+     id: currentId,
+     title: title,
+     authorName: selectedAuthor,
+     genresNames: selectedGenres
+    };
+
+$.ajax({
+    url: '/book/save',
+    type: 'post',
+    data: JSON.stringify(bookDto),
+    headers: {
+              "Content-Type": "application/json; odata=verbose"
+    },
+
+    success: function(response){
+      location.href = "/";
+    }
+  });
+  }
+</script>
+
+</body>
+</html>
